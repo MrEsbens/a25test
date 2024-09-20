@@ -1,6 +1,8 @@
 <?php
-require_once 'App/Infrastructure/sdbh.php'; use sdbh\sdbh;
-$dbh = new sdbh();
+
+require_once 'App/Infrastructure/data_manager.php'; use DataManagers\Datamanager;
+require_once 'App/Infrastructure/Entities/data_mode_enum.php'; use DataSources\DataSource;
+$data_manager = new DataManager(DataSource::DataBase);
 ?>
 <html>
 <head>
@@ -23,7 +25,7 @@ $dbh = new sdbh();
         <div class="col-12">
             <form action="App/calculate.php" method="POST" id="form">
 
-                <?php $products = $dbh->make_query('SELECT * FROM a25_products');
+                <?php $products = $data_manager->select_all("a25_products");
                 if (is_array($products)) { ?>
                     <label class="form-label" for="product">Выберите продукт:</label>
                     <select class="form-select" name="product" id="product">
@@ -36,11 +38,11 @@ $dbh = new sdbh();
                         <?php } ?>
                     </select>
                 <?php } ?>
-
+                <h5>Стоимость аренды в день: <span id = "price"></span></h5>
                 <label for="customRange1" class="form-label" id="count">Количество дней:</label>
                 <input type="number" name="days" class="form-control" id="customRange1" min="1" max="30">
 
-                <?php $services = unserialize($dbh->mselect_rows('a25_settings', ['set_key' => 'services'], 0, 1, 'id')[0]['set_value']);
+                <?php $services = $data_manager->select_values('a25_settings', ['set_key' => 'services'], 0, 1, 'id');
                 if (is_array($services)) {
                     ?>
                     <label for="customRange1" class="form-label">Дополнительно:</label>
@@ -68,13 +70,40 @@ $dbh = new sdbh();
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     $(document).ready(function() {
+        $.ajax({
+            url: 'App/calculate.php',
+            type: 'GET',
+            data: 'func_key=count_price&' + $('#form').serialize(),
+            success: function(response) {
+                $("#price").text(response);
+            },
+            error: function() {
+                $("#price").text('Ошибка при расчете');
+            }
+        });
+
+        $('#form').on('change', function() {
+            let func_key = 'func_key=count_price&'
+            $.ajax({
+                url: 'App/calculate.php',
+                type: 'GET',
+                data: func_key + $(this).serialize(),
+                success: function(response) {
+                    $("#price").text(response);
+                },
+                error: function() {
+                    $("#price").text('Ошибка при расчете');
+                }
+            });
+        });
+
         $("#form").submit(function(event) {
             event.preventDefault();
-
+            let func_key = 'func_key=calculate1&'
             $.ajax({
                 url: 'App/calculate.php',
                 type: 'POST',
-                data: $(this).serialize(),
+                data: func_key + $(this).serialize(),
                 success: function(response) {
                     $("#total-price").text(response);
                 },

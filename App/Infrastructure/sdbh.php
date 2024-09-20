@@ -12,14 +12,20 @@ class sdbh
     public $sql_read;
     public $sql_write;
 
-    function __construct(array $settings = [])
+    function __construct(array $settings = [
+        'port' => 3306,
+        'host' => 'localhost',
+        'dbname' => 'test_a25',
+        'user' => 'root',
+        'pass' => ''
+    ])
     {
-        $this->port = $settings['host'] ?: 3306;
-        $this->host = $settings['host'] ?: 'localhost';
-        $this->dbname = $settings['dbname'] ?: 'test_a25';
-        $this->user = $settings['user'] ?: 'root';
-        $this->pass = $settings['pass'] ?: '';
-        $mysql_conn = mysqli_connect($this->host, $this->user, $this->pass, $this->dbname, $this->port);
+        $this->port = $settings['port'];
+        $this->host = $settings['host'];
+        $this->dbname = $settings['dbname'];
+        $this->user = $settings['user'];
+        $this->pass = $settings['pass'];
+        $mysql_conn = mysqli_connect($this->host.':'.$this->port, $this->user, $this->pass, $this->dbname, $this->port);
 
         $this->sql_read = $mysql_conn;
         $this->sql_write = false;
